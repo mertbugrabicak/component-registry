@@ -69,6 +69,14 @@ def slow_fetch_pnc_sbom(purl: str, product_data: dict, sbom_data: dict) -> None:
             component_type = Component.Type.MAVEN
         else:
             component_type = Component.Type.GENERIC
+           
+        # Create a PNC type build for the component if it already doesn't exist
+        component_build = None
+        if component.get("meta_attr", {}).get("pnc_build_id", None) is not None:
+            component_build, _ = SoftwareBuild.objects.get_or_create(
+                build_id=component["meta_attr"]["pnc_build_id"],
+                build_type=SoftwareBuild.Type.PNC,
+            )
 
         components[bomref], _ = Component.objects.update_or_create(
             type=component_type,
@@ -76,6 +84,7 @@ def slow_fetch_pnc_sbom(purl: str, product_data: dict, sbom_data: dict) -> None:
             version=component["version"],
             release="",
             arch="noarch",
+            software_build=component_build,
             defaults=defaults,
         )
 
